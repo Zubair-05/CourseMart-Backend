@@ -9,6 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(cors())
 const SECRET = process.env.JSON_SECRET_KEY;  // This should be in an environment variable in a real application
+const PORT = process.env.PORT || 3000;
 
 const bodyParser = require('body-parser');
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -349,6 +350,6 @@ app.put('/users/profile', auth, async (req, res) => {
     }
 })
 
-app.listen(3000, () => {
+app.listen(PORT, () => {
     console.log('Server started on port 3000');
 });
