@@ -71,7 +71,7 @@ const Admin = mongoose.model('Admin', adminSchema);
 const Course = mongoose.model('Course', courseSchema);
 
 
-mongoose.connect(process.env.MONGOOSE_URI, { useNewUrlParser: true, useUnifiedTopology: true, dbName: "courseApp" });
+mongoose.connect(`${process.env.MONGOOSE_URI}`, { useNewUrlParser: true, useUnifiedTopology: true, dbName: "courseApp" });
 
 const db = mongoose.connection;
 
