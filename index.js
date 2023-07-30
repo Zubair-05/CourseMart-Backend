@@ -2,12 +2,13 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 
 app.use(express.json());
 app.use(cors())
-const SECRET = 'SECr3t';  // This should be in an environment variable in a real application
+const SECRET = process.env.JSON_SECRET_KEY;  // This should be in an environment variable in a real application
 
 const bodyParser = require('body-parser');
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -68,9 +69,8 @@ const User = mongoose.model('User', userSchema);
 const Admin = mongoose.model('Admin', adminSchema);
 const Course = mongoose.model('Course', courseSchema);
 
-// mongodb+srv://mullamdz0501:<password>@coursemart.sgxrqtk.mongodb.net/
-// lWhseRJLBlv11HVI
-mongoose.connect('mongodb+srv://mullamdz0501:lWhseRJLBlv11HVI@coursemart.sgxrqtk.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true, dbName: "courseApp" });
+
+mongoose.connect(process.env.MONGOOSE_URI, { useNewUrlParser: true, useUnifiedTopology: true, dbName: "courseApp" });
 
 const db = mongoose.connection;
 
