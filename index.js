@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
     username: {
         type: String,
         required: true,
-        unique: true
+        // unique: true
     },
     email : {
         type: String,
@@ -60,6 +60,7 @@ const courseSchema = new mongoose.Schema({
     description: String,
     price: Number,
     imageLink: String,
+    isPublished: Boolean,
     creator: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     createdAt: { type: Date, default: Date.now }
@@ -93,9 +94,10 @@ const auth = (req, res, next) => {
         const token = authHeader.split(' ')[1];
         jwt.verify(token, SECRET, (err, decoded) => {
             if (err) {
-                res.status(401).json({ message: 'Invalid token' });
+                res.status(401).json({status:401, message: 'Invalid token' });
             } else {
                 req.email = decoded.email;
+                req.role = decoded.role;
                 next();
             }
         });
@@ -113,7 +115,7 @@ app.post('/admin/signup', async (req, res) => {
             res.status(400).json({ message: 'Admin already exists' });
         } else {
             await admin.save();
-            const token = jwt.sign({ email }, SECRET);
+            const token = jwt.sign({ email, role : 'Admin' }, SECRET, {expiresIn: '24h'});
             res.status(201).json({ message: 'Admin created successfully', token: token });
         }
     } catch (error) {
@@ -128,7 +130,7 @@ app.post('/admin/login', async (req, res) => {
     try {
         const admin = await Admin.findOne({ email });
         if (admin && admin.password === password) {
-            const token = jwt.sign({ email }, SECRET);
+            const token = jwt.sign({ email, role:'admin' }, SECRET);
             res.status(200).json({ message: 'Logged in successfully', token });
         } else {
             res.status(400).json({ message: 'Invalid credentials' });
@@ -137,6 +139,32 @@ app.post('/admin/login', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+app.get('/admin/profile', auth, async (req, res) => {
+    const { email } = req;
+    try{
+        const admin = await Admin.findOne({ email });
+        // console.log(admin);
+        if(!admin) res.status(400).json({ message: 'Admin not found' });
+        else res.status(200).json({ admin });
+    } catch(err){
+        res.status(500).json({ message: err.message });
+    }
+})
+
+app.put('/admin/profile', auth, async (req, res) => {
+    const {email} = req;
+    const { username } = req.body;
+    try{
+        const admin = await Admin.findOne({ email });
+        admin.username = username;
+        await admin.save();
+        res.status(200).json({ message: 'Profile updated successfully' });
+    } catch(err){
+        res.status(500).json({ message: err.message });
+    }
+})
+
 
 app.post('/admin/courses', auth, async (req, res) => {
     const course = req.body;
@@ -151,11 +179,13 @@ app.post('/admin/courses', auth, async (req, res) => {
         admin.courses.push(createdCourse._id);
         console.log(admin.courses);
         await admin.save();
-        res.status(201).json({ message: 'Course created successfully' });
+        res.status(201).json(newCourse);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
+
 
 app.get('/admin/courses', auth, async (req, res) => {
     const { email } = req;
@@ -196,13 +226,16 @@ app.delete('/admin/courses/:id', auth, async (req, res) => {
 app.post('/users/signup', async (req, res) => {
     const { username, email, password } = req.body;
     const user = new User({ username, email, password });
+    console.log('hi');
     try {
-        const newUser = await Admin.findOne({ email });
+        const newUser = await User.findOne({ email });
         if (newUser) {
+            console.log('Already exists');
             res.status(400).json({ message: 'User already exists' });
         } else {
             await user.save();
             const token = jwt.sign({ email }, SECRET);
+            console.log(token);
             res.status(201).json({ message: 'user created successfully', token: token });
         }
     } catch (error) {
